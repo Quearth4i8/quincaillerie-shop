@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Wrench } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { BrandMark } from "@/components/BrandMark";
 
 export function Logo({
   name,
@@ -17,9 +17,7 @@ export function Logo({
 }) {
   return (
     <Link href="/" className={cn("flex items-center gap-3", className)} aria-label={homeLabel}>
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-accent">
-        <Wrench className="size-6 text-ink" strokeWidth={2.2} aria-hidden="true" />
-      </span>
+      <BrandMark size={dark ? 40 : 52} tile={dark} />
       <span className="flex flex-col leading-none">
         <span
           lang="fr"

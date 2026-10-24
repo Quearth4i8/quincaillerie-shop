@@ -3,6 +3,7 @@ import { getCategories, getSettings } from "@/lib/data";
 import { telHref } from "@/lib/format";
 import { getT } from "@/i18n/server";
 import { categoryName } from "@/i18n/config";
+import { BrandMark } from "@/components/BrandMark";
 
 export async function Footer() {
   const [settings, categories, { t, locale }] = await Promise.all([getSettings(), getCategories(), getT()]);
@@ -11,7 +12,10 @@ export async function Footer() {
     <footer className="mt-16 bg-ink text-zinc-300">
       <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex flex-col gap-3">
-          <span lang="fr" className="heading-display text-3xl uppercase text-white">{settings.shop_name}</span>
+          <span className="flex items-center gap-3">
+            <BrandMark size={40} tile />
+            <span lang="fr" className="heading-display text-3xl uppercase text-white">{settings.shop_name}</span>
+          </span>
           <p className="leading-relaxed">{t.footer.about}</p>
         </div>
         <div className="flex flex-col gap-2">

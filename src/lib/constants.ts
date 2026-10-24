@@ -5,6 +5,7 @@ export const GOVERNORATES = [
 ] as const;
 
 export const PRODUCT_IMAGES_BUCKET = "product-images";
+export const CHAT_IMAGES_BUCKET = "chat-images";
 export const PAGE_SIZE = 12;
 
 export const CONVERSATION_FIELDS =

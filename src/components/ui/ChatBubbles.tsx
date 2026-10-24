@@ -45,14 +45,30 @@ export function ChatBubbles({
               {!isMine && prev?.sender !== m.sender && (
                 <span className="mb-0.5 px-1 text-xs font-semibold text-muted">{theirLabel}</span>
               )}
-              <p
-                className={cn(
-                  "whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[15px] leading-snug",
-                  isMine ? "rounded-ee-md bg-ink text-white" : "rounded-es-md border border-line bg-white text-ink",
-                )}
-              >
-                {m.body}
-              </p>
+              {m.image_url && (
+                <a href={m.image_url} target="_blank" rel="noopener noreferrer" className="mb-1 block">
+                  {/* Plain img: chat photos have any size and are shown as they are */}
+                  <img
+                    src={m.image_url}
+                    alt=""
+                    loading="lazy"
+                    className={cn(
+                      "max-h-72 max-w-full rounded-2xl border border-line bg-white object-contain",
+                      isMine ? "rounded-ee-md" : "rounded-es-md",
+                    )}
+                  />
+                </a>
+              )}
+              {m.body.trim() && (
+                <p
+                  className={cn(
+                    "whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[15px] leading-snug",
+                    isMine ? "rounded-ee-md bg-ink text-white" : "rounded-es-md border border-line bg-white text-ink",
+                  )}
+                >
+                  {m.body}
+                </p>
+              )}
               <span className="mt-0.5 px-1 text-[11px] text-muted">{formatTimeL(m.created_at, locale)}</span>
             </div>
           </div>

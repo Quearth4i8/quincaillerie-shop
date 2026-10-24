@@ -5,6 +5,7 @@ import { ROLE_LABEL } from "@/lib/format";
 import type { UserRole } from "@/lib/types";
 import { signOut } from "@/app/actions/auth";
 import { NavLinks } from "./NavLinks";
+import { BrandMark } from "@/components/BrandMark";
 import { RealtimeOrders } from "./RealtimeOrders";
 import { RealtimeChat } from "./RealtimeChat";
 import { createClient } from "@/lib/supabase/server";
@@ -29,10 +30,13 @@ export async function Shell({
     <div lang="fr" dir="ltr" className="flex min-h-dvh flex-col lg:flex-row">
       <aside className="bg-ink text-zinc-300 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-64 lg:shrink-0 lg:flex-col">
         <div className="flex items-center justify-between gap-3 px-4 py-4 lg:px-5 lg:py-6">
-          <Link href={user.role === "admin" ? "/admin" : "/gestion"} className="flex flex-col leading-none">
-            <span className="heading-display text-2xl uppercase text-white">{settings.shop_name}</span>
-            <span className="mt-1 text-xs font-semibold uppercase tracking-wider text-accent">
-              Espace {user.role === "admin" ? "admin" : "gestion"}
+          <Link href={user.role === "admin" ? "/admin" : "/gestion"} className="flex items-center gap-3">
+            <BrandMark size={36} tile />
+            <span className="flex flex-col leading-none">
+              <span className="heading-display text-2xl uppercase text-white">{settings.shop_name}</span>
+              <span className="mt-1 text-xs font-semibold uppercase tracking-wider text-accent">
+                Espace {user.role === "admin" ? "admin" : "gestion"}
+              </span>
             </span>
           </Link>
           <Link href="/" className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-semibold hover:bg-white/10 lg:hidden">

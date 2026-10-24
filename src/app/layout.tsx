@@ -34,6 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { default: t.meta.siteTitle, template: `%s · ${t.meta.titleSuffix}` },
     description: t.meta.description,
+    openGraph: { images: ["/logo.png"] },
   };
 }
 

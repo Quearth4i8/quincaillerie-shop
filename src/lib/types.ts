@@ -100,6 +100,8 @@ export type ChatMessage = {
   id: number;
   sender: ChatSender;
   body: string;
+  /** Photo sent by staff (05_chat_images.sql) */
+  image_url?: string | null;
   created_at: string;
 };
 

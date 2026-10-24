@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { ChatBubbles } from "@/components/ui/ChatBubbles";
+import { BrandMark } from "@/components/BrandMark";
 import { useI18n } from "@/i18n/I18nProvider";
 import { translateDbError } from "@/i18n/config";
 
@@ -214,9 +215,7 @@ function ChatWidget({
           className="animate-pop pointer-events-auto flex h-[min(560px,calc(100dvh-9rem))] w-[min(380px,calc(100vw-2rem))] origin-bottom-right rtl:origin-bottom-left flex-col overflow-hidden rounded-2xl border border-line bg-ground shadow-2xl"
         >
           <header className="flex items-center gap-3 bg-ink px-4 py-3 text-white">
-            <span className="flex size-10 items-center justify-center rounded-full bg-accent text-ink">
-              <MessageSquareText className="size-5" aria-hidden="true" />
-            </span>
+            <BrandMark size={32} tile className="rounded-full" />
             <div className="flex-1 leading-tight">
               <p className="font-bold">{c.title(shopName)}</p>
               <p className="text-sm text-zinc-300">{c.subtitle}</p>
@@ -282,7 +281,7 @@ function ChatWidget({
             {error && <p className="text-sm font-semibold text-danger" role="alert">{error}</p>}
             <div className="flex items-end gap-2">
               <textarea
-                className="textarea max-h-32 min-h-11 flex-1 resize-none py-2.5 text-[15px]"
+                className="textarea field-sizing-content max-h-32 min-h-11 flex-1 resize-none py-2 text-[15px]"
                 rows={1}
                 placeholder={c.messagePlaceholder}
                 aria-label={c.messageLabel}

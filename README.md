@@ -18,10 +18,11 @@ Online hardware store for Tunisia. Customers order on the website or by phone/Wh
 3. In a new query, run [`supabase/02_seed.sql`](supabase/02_seed.sql). It adds the 24 gouvernorats, the categories and 10 sample products. This step is optional, and the sample products can be deleted later.
 4. In a new query, run [`supabase/03_chat.sql`](supabase/03_chat.sql). It adds the customer service chat (the "Discuter avec nous" button on the shop, answered from **Gestion → Messages**).
 5. In a new query, run [`supabase/04_arabic.sql`](supabase/04_arabic.sql). It adds an Arabic name to each rayon for the Arabic version of the shop (editable in **Gestion → Rayons**).
-6. Go to **Authentication → URL Configuration**:
+6. In a new query, run [`supabase/05_chat_images.sql`](supabase/05_chat_images.sql). It lets staff send photos in the chat (creates the `chat-images` storage bucket).
+7. Go to **Authentication → URL Configuration**:
    - **Site URL**: `http://localhost:3000` (your real domain once the site is online)
    - **Redirect URLs**: add `http://localhost:3000/auth/callback` (and `https://your-domain/auth/callback` later)
-7. Optional: under **Authentication → Sign In / Providers → Email**, turn off **Confirm email** so that new customers are signed in immediately, without the confirmation e-mail.
+8. Optional: under **Authentication → Sign In / Providers → Email**, turn off **Confirm email** so that new customers are signed in immediately, without the confirmation e-mail.
 
 ## 3. Configure the app
 
@@ -103,6 +104,7 @@ supabase/
   02_seed.sql          gouvernorats, categories, sample products
   03_chat.sql          customer service chat: conversations, messages, chat functions, realtime
   04_arabic.sql        Arabic names for the rayons (Arabic version of the shop)
+  05_chat_images.sql   photos in the chat: image column, chat-images bucket
 src/
   proxy.ts             refreshes the session, protects /compte /gestion /admin
   app/

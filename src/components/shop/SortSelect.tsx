@@ -22,7 +22,7 @@ export function SortSelect({ value }: { value: string }) {
 
   return (
     <div className="flex items-center gap-2.5">
-      <label htmlFor="tri" className="font-semibold">{t.catalog.sortBy}</label>
+      <label htmlFor="tri" className="whitespace-nowrap font-semibold">{t.catalog.sortBy}</label>
       <Select
         id="tri"
         value={value}

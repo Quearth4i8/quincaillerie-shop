@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCheck, LoaderCircle, MessagesSquare, Phone, RotateCcw, Send, UserRound } from "lucide-react";
+import { ArrowLeft, CheckCheck, ImagePlus, LoaderCircle, MessagesSquare, Phone, RotateCcw, Send, UserRound, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import type { ChatMessage, Conversation } from "@/lib/types";
 import { telHref } from "@/lib/format";
-import { CONVERSATION_FIELDS } from "@/lib/constants";
+import { CHAT_IMAGES_BUCKET, CONVERSATION_FIELDS } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import { ChatBubbles } from "@/components/ui/ChatBubbles";
 
@@ -20,6 +20,10 @@ function shortDate(iso: string) {
 }
 
 type Row = ChatMessage & { conversation_id: string };
+
+const MESSAGE_FIELDS = "id, sender, body, image_url, created_at";
+const MAX_IMAGE_MB = 5;
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export function Inbox({
   initial,
@@ -38,6 +42,8 @@ export function Inbox({
   const [loading, setLoading] = useState(false);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState<"open" | "all">("open");
   const selectedRef = useRef(selectedId);
   selectedRef.current = selectedId;
@@ -75,7 +81,7 @@ export function Inbox({
     setMessages([]);
     supabase
       .from("messages")
-      .select("id, sender, body, created_at")
+      .select(MESSAGE_FIELDS)
       .eq("conversation_id", selectedId)
       .order("id")
       .limit(500)
@@ -112,14 +118,58 @@ export function Inbox({
     };
   }, [supabase, refreshList, markRead]);
 
+  function pickPhoto(file: File | undefined) {
+    if (!file) return;
+    if (!IMAGE_TYPES.includes(file.type)) {
+      toast.error("Format non pris en charge", { description: "Photo JPG, PNG, WebP ou GIF." });
+      return;
+    }
+    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+      toast.error(`Photo trop lourde (${MAX_IMAGE_MB} Mo maximum)`);
+      return;
+    }
+    if (photo) URL.revokeObjectURL(photo.preview);
+    setPhoto({ file, preview: URL.createObjectURL(file) });
+  }
+
+  function clearPhoto() {
+    if (photo) URL.revokeObjectURL(photo.preview);
+    setPhoto(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  // A photo picked for one conversation must not be sent to another
+  useEffect(() => {
+    setPhoto((p) => {
+      if (p) URL.revokeObjectURL(p.preview);
+      return null;
+    });
+  }, [selectedId]);
+
   async function send() {
     const body = draft.trim();
-    if (!body || !selectedId || sending) return;
+    if ((!body && !photo) || !selectedId || sending) return;
     setSending(true);
+
+    let image_url: string | null = null;
+    if (photo) {
+      const ext = photo.file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${selectedId}/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from(CHAT_IMAGES_BUCKET)
+        .upload(path, photo.file, { contentType: photo.file.type, cacheControl: "31536000" });
+      if (uploadError) {
+        setSending(false);
+        toast.error("Photo non envoyée", { description: uploadError.message });
+        return;
+      }
+      image_url = supabase.storage.from(CHAT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl;
+    }
+
     const { data, error } = await supabase
       .from("messages")
-      .insert({ conversation_id: selectedId, sender: "staff", staff_id: staffId, body })
-      .select("id, sender, body, created_at")
+      .insert({ conversation_id: selectedId, sender: "staff", staff_id: staffId, body, image_url })
+      .select(MESSAGE_FIELDS)
       .single<ChatMessage>();
     setSending(false);
     if (error) {
@@ -127,6 +177,7 @@ export function Inbox({
       return;
     }
     setDraft("");
+    clearPhoto();
     setMessages((prev) => (prev.some((p) => p.id === data.id) ? prev : [...prev, data]));
   }
 
@@ -267,27 +318,69 @@ export function Inbox({
                 e.preventDefault();
                 send();
               }}
-              className="flex items-end gap-2 border-t border-line bg-white p-3"
+              className="flex flex-col gap-2 border-t border-line bg-white p-3"
             >
-              <textarea
-                className="textarea max-h-40 min-h-11 flex-1 resize-none py-2.5"
-                rows={2}
-                placeholder="Votre réponse… (Entrée pour envoyer, Maj+Entrée pour aller à la ligne)"
-                aria-label="Votre réponse"
-                maxLength={2000}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    send();
-                  }
-                }}
-              />
-              <button type="submit" disabled={sending || !draft.trim()} className="btn-accent h-11">
-                {sending ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : <Send className="size-4" aria-hidden="true" />}
-                Envoyer
-              </button>
+              {photo && (
+                <div className="relative self-start">
+                  <img src={photo.preview} alt="Photo à envoyer" className="max-h-32 rounded-xl border border-line object-contain" />
+                  <button
+                    type="button"
+                    onClick={clearPhoto}
+                    aria-label="Retirer la photo"
+                    className="absolute -right-2 -top-2 flex size-7 cursor-pointer items-center justify-center rounded-full bg-ink text-white shadow hover:bg-black"
+                  >
+                    <X className="size-4" aria-hidden="true" />
+                  </button>
+                </div>
+              )}
+              <div className="flex items-end gap-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept={IMAGE_TYPES.join(",")}
+                  className="hidden"
+                  onChange={(e) => pickPhoto(e.target.files?.[0])}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={sending}
+                  aria-label="Joindre une photo"
+                  title="Joindre une photo"
+                  className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-line-strong text-ink hover:bg-ground disabled:opacity-60"
+                >
+                  <ImagePlus className="size-5" aria-hidden="true" />
+                </button>
+                <textarea
+                  // One line like the buttons beside it, grows with the text (field-sizing)
+                  className="textarea field-sizing-content max-h-40 min-h-11 flex-1 resize-none py-2"
+                  rows={1}
+                  placeholder="Votre réponse…"
+                  title="Entrée pour envoyer, Maj+Entrée pour aller à la ligne, Ctrl+V pour coller une photo"
+                  aria-label="Votre réponse"
+                  maxLength={2000}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      send();
+                    }
+                  }}
+                  // Paste a screenshot straight into the reply
+                  onPaste={(e) => {
+                    const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith("image/"));
+                    if (file) {
+                      e.preventDefault();
+                      pickPhoto(file);
+                    }
+                  }}
+                />
+                <button type="submit" disabled={sending || (!draft.trim() && !photo)} className="btn-accent h-11">
+                  {sending ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : <Send className="size-4" aria-hidden="true" />}
+                  Envoyer
+                </button>
+              </div>
             </form>
           </>
         )}
