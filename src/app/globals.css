@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #16181b;
+  --color-ink-soft: #39404a;
+  --color-muted: #5b6168;
+  --color-ground: #f3f3f0;
+  --color-surface: #ffffff;
+  --color-line: #e2e2dc;
+  --color-line-strong: #a9aba5;
+  --color-tile: #edede8;
+  --color-accent: #ffc21a;
+  --color-accent-strong: #f0ad00;
+  --color-whatsapp: #1f8a4c;
+  --color-ok: #1f7a45;
+  --color-warn: #9a5b00;
+  --color-danger: #b42318;
+
+  --font-sans: var(--font-barlow), system-ui, sans-serif;
+  --font-display: var(--font-barlow-condensed), var(--font-barlow), sans-serif;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6;
+  }
+  .btn, .btn-accent, .btn-dark, .btn-outline, .btn-whatsapp, .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 font-bold transition
+      active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 min-h-11 cursor-pointer;
+  }
+  .btn-accent {
+    @apply bg-accent text-ink hover:bg-accent-strong;
+  }
+  .btn-dark {
+    @apply bg-ink text-white hover:bg-black;
+  }
+  .btn-outline {
+    @apply border-2 border-ink bg-white text-ink hover:bg-ground;
+  }
+  .btn-whatsapp {
+    @apply bg-whatsapp text-white hover:brightness-95;
+  }
+  .btn-danger {
+    @apply bg-danger text-white hover:brightness-95;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-surface;
+  }
+  .field-label {
+    @apply flex flex-col gap-1.5 text-[15px] font-semibold;
+  }
+  .input {
+    @apply h-12 w-full rounded-xl border border-line-strong bg-white px-3.5 text-base font-normal text-ink
+      placeholder:text-muted/80 focus:border-ink focus:outline-none focus:ring-2 focus:ring-ink/15;
+  }
+  .textarea {
+    @apply w-full rounded-xl border border-line-strong bg-white px-3.5 py-3 text-base font-normal text-ink
+      focus:border-ink focus:outline-none focus:ring-2 focus:ring-ink/15;
+  }
+  .heading-display {
+    @apply font-display font-extrabold leading-none tracking-tight;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ring-inset;
+  }
+}
+
+@keyframes pop-in {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.animate-pop { animation: pop-in 0.25s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
