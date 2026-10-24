@@ -16,10 +16,11 @@ Online hardware store for Tunisia. Customers order on the website or by phone/Wh
 1. Create a project in Supabase.
 2. Open **SQL Editor → New query**, paste the whole of [`supabase/01_schema.sql`](supabase/01_schema.sql) and click **Run**.
 3. In a new query, run [`supabase/02_seed.sql`](supabase/02_seed.sql). It adds the 24 gouvernorats, the categories and 10 sample products. This step is optional, and the sample products can be deleted later.
-4. Go to **Authentication → URL Configuration**:
+4. In a new query, run [`supabase/03_chat.sql`](supabase/03_chat.sql). It adds the customer service chat (the "Discuter avec nous" button on the shop, answered from **Gestion → Messages**).
+5. Go to **Authentication → URL Configuration**:
    - **Site URL**: `http://localhost:3000` (your real domain once the site is online)
    - **Redirect URLs**: add `http://localhost:3000/auth/callback` (and `https://your-domain/auth/callback` later)
-5. Optional: under **Authentication → Sign In / Providers → Email**, turn off **Confirm email** so that new customers are signed in immediately, without the confirmation e-mail.
+6. Optional: under **Authentication → Sign In / Providers → Email**, turn off **Confirm email** so that new customers are signed in immediately, without the confirmation e-mail.
 
 ## 3. Configure the app
 
@@ -99,6 +100,7 @@ The easiest option is **Vercel**:
 supabase/
   01_schema.sql        tables, roles, RLS policies, order functions, storage, realtime
   02_seed.sql          gouvernorats, categories, sample products
+  03_chat.sql          customer service chat: conversations, messages, chat functions, realtime
 src/
   proxy.ts             refreshes the session, protects /compte /gestion /admin
   app/

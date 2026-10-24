@@ -6,3 +6,6 @@ export const GOVERNORATES = [
 
 export const PRODUCT_IMAGES_BUCKET = "product-images";
 export const PAGE_SIZE = 12;
+
+export const CONVERSATION_FIELDS =
+  "id, user_id, customer_name, phone, is_closed, staff_unread, last_message, last_message_at, created_at";

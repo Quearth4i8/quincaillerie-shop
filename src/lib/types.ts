@@ -91,3 +91,24 @@ export type Order = {
 };
 
 export type ActionState = { ok: boolean; message?: string; errors?: Record<string, string> } | null;
+
+export type ChatSender = "customer" | "staff";
+
+export type ChatMessage = {
+  id: number;
+  sender: ChatSender;
+  body: string;
+  created_at: string;
+};
+
+export type Conversation = {
+  id: string;
+  user_id: string | null;
+  customer_name: string;
+  phone: string | null;
+  is_closed: boolean;
+  staff_unread: number;
+  last_message: string | null;
+  last_message_at: string;
+  created_at: string;
+};

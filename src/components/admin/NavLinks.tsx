@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ChartColumn, ClipboardList, LayoutDashboard, MapPin, Package, PhoneCall, Settings, Tags, Users,
+  ChartColumn, ClipboardList, LayoutDashboard, MapPin, MessagesSquare, Package, PhoneCall, Settings, Tags, Users,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/lib/types";
@@ -15,6 +15,7 @@ const MANAGER: Item[] = [
   { href: "/gestion", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
   { href: "/gestion/commandes", label: "Commandes", icon: ClipboardList },
   { href: "/gestion/commandes/nouvelle", label: "Commande téléphone", icon: PhoneCall, exact: true },
+  { href: "/gestion/messages", label: "Messages", icon: MessagesSquare },
   { href: "/gestion/produits", label: "Produits", icon: Package },
   { href: "/gestion/categories", label: "Rayons", icon: Tags },
 ];
@@ -26,7 +27,7 @@ const ADMIN: Item[] = [
   { href: "/admin/parametres", label: "Paramètres boutique", icon: Settings },
 ];
 
-export function NavLinks({ role }: { role: UserRole }) {
+export function NavLinks({ role, unreadChats = 0 }: { role: UserRole; unreadChats?: number }) {
   const pathname = usePathname();
 
   const isActive = (item: Item) => {
@@ -53,6 +54,17 @@ export function NavLinks({ role }: { role: UserRole }) {
           >
             <item.icon className="size-[18px]" aria-hidden="true" />
             {item.label}
+            {item.href === "/gestion/messages" && unreadChats > 0 && (
+              <span
+                className={cn(
+                  "ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold",
+                  active ? "bg-ink text-accent" : "bg-accent text-ink",
+                )}
+                aria-label={`${unreadChats} non lue(s)`}
+              >
+                {unreadChats}
+              </span>
+            )}
           </Link>
         );
       })}

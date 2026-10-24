@@ -39,7 +39,7 @@ body {
 
 @layer components {
   .container-page {
-    @apply mx-auto w-full max-w-7xl px-4 sm:px-6;
+    @apply mx-auto w-full px-4 sm:px-6 lg:px-10 2xl:px-14;
   }
   .btn, .btn-accent, .btn-dark, .btn-outline, .btn-whatsapp, .btn-danger {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 font-bold transition

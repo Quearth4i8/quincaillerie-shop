@@ -6,6 +6,8 @@ import type { UserRole } from "@/lib/types";
 import { signOut } from "@/app/actions/auth";
 import { NavLinks } from "./NavLinks";
 import { RealtimeOrders } from "./RealtimeOrders";
+import { RealtimeChat } from "./RealtimeChat";
+import { createClient } from "@/lib/supabase/server";
 
 export async function Shell({
   user,
@@ -14,7 +16,11 @@ export async function Shell({
   user: { email: string | null; role: UserRole; profile: { full_name: string | null } | null };
   children: React.ReactNode;
 }) {
-  const settings = await getSettings();
+  const supabase = await createClient();
+  const [settings, { count: unreadChats }] = await Promise.all([
+    getSettings(),
+    supabase.from("conversations").select("id", { count: "exact", head: true }).gt("staff_unread", 0),
+  ]);
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
@@ -31,7 +37,7 @@ export async function Shell({
             Boutique
           </Link>
         </div>
-        <NavLinks role={user.role} />
+        <NavLinks role={user.role} unreadChats={unreadChats ?? 0} />
         <div className="mt-auto hidden border-t border-white/10 p-4 lg:block">
           <p className="truncate font-semibold text-white">{user.profile?.full_name || user.email}</p>
           <p className="text-sm">{ROLE_LABEL[user.role]}</p>
@@ -49,9 +55,10 @@ export async function Shell({
         </div>
       </aside>
       <div className="min-w-0 flex-1">
-        <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8">{children}</div>
+        <div className="w-full px-4 py-6 sm:px-6 lg:px-10 lg:py-8">{children}</div>
       </div>
       <RealtimeOrders />
+      <RealtimeChat />
     </div>
   );
 }
