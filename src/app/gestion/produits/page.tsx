@@ -7,6 +7,8 @@ import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/admin/Shell";
 import { ProductImage } from "@/components/shop/ProductImage";
+import { Select } from "@/components/ui/Select";
+import { CategoryIcon } from "@/lib/icons";
 import { ActiveToggle } from "./ActiveToggle";
 
 export const metadata: Metadata = { title: "Produits" };
@@ -71,15 +73,29 @@ export default async function ProductsAdminPage({
           <input id="pq" name="q" defaultValue={q} placeholder="Nom ou référence…" className="input h-11 pl-11" />
         </div>
         <label htmlFor="pcat" className="sr-only">Rayon</label>
-        <select id="pcat" name="categorie" defaultValue={sp.categorie ?? ""} className="input h-11 w-auto">
-          <option value="">Tous les rayons</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <Select
+          id="pcat"
+          name="categorie"
+          defaultValue={sp.categorie ?? ""}
+          className="w-56"
+          triggerClassName="h-11"
+          options={[
+            { value: "", label: "Tous les rayons" },
+            ...categories.map((c) => ({ value: c.id, label: c.name, icon: <CategoryIcon name={c.icon} className="size-4" /> })),
+          ]}
+        />
         <label htmlFor="pstock" className="sr-only">Stock</label>
-        <select id="pstock" name="stock" defaultValue={sp.stock ?? ""} className="input h-11 w-auto">
-          <option value="">Tout le stock</option>
-          <option value="faible">Stock faible (≤ 3)</option>
-        </select>
+        <Select
+          id="pstock"
+          name="stock"
+          defaultValue={sp.stock ?? ""}
+          className="w-52"
+          triggerClassName="h-11"
+          options={[
+            { value: "", label: "Tout le stock" },
+            { value: "faible", label: "Stock faible (≤ 3)" },
+          ]}
+        />
         <button type="submit" className="btn-dark h-11">Filtrer</button>
       </form>
 

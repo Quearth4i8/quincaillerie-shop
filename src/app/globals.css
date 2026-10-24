@@ -88,6 +88,12 @@ body {
 }
 .animate-pop { animation: pop-in 0.25s ease-out; }
 
+@keyframes menu-in {
+  from { transform: translateY(-4px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-menu { animation: menu-in 0.12s ease-out; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }

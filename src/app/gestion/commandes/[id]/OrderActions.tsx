@@ -7,6 +7,7 @@ import { CircleCheck, PackageCheck, Truck, Undo2, X } from "lucide-react";
 import { deleteOrder, saveStaffNote, updateOrderStatus } from "@/app/actions/orders";
 import { STATUS_LABEL } from "@/lib/format";
 import type { OrderStatus } from "@/lib/types";
+import { Select } from "@/components/ui/Select";
 
 const NEXT_STEP: Partial<Record<OrderStatus, { status: OrderStatus; label: string; icon: typeof Truck }>> = {
   pending: { status: "confirmed", label: "Client appelé · confirmer", icon: CircleCheck },
@@ -53,16 +54,12 @@ export function OrderActions({
 
         <label className="field-label mt-1">
           Changer le statut manuellement
-          <select
+          <Select
             value={status}
             disabled={pending}
-            onChange={(e) => setStatus(e.target.value as OrderStatus)}
-            className="input"
-          >
-            {(Object.keys(STATUS_LABEL) as OrderStatus[]).map((s) => (
-              <option key={s} value={s}>{STATUS_LABEL[s]}</option>
-            ))}
-          </select>
+            onChange={(v) => setStatus(v as OrderStatus)}
+            options={(Object.keys(STATUS_LABEL) as OrderStatus[]).map((s) => ({ value: s, label: STATUS_LABEL[s] }))}
+          />
         </label>
 
         {status !== "cancelled" ? (

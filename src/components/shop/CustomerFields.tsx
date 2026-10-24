@@ -2,6 +2,7 @@
 
 import type { DeliveryZone } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
+import { Select } from "@/components/ui/Select";
 
 export type CustomerDefaults = {
   customer_name: string;
@@ -68,21 +69,18 @@ export function CustomerFields({
         <legend className="heading-display px-1.5 text-[26px]">2. Adresse de livraison</legend>
         <label className="field-label">
           Gouvernorat
-          <select
+          <Select
             name="governorate"
             required
             value={governorate}
-            onChange={(e) => onGovernorateChange(e.target.value)}
-            className="input"
+            onChange={onGovernorateChange}
             {...err("governorate")}
-          >
-            <option value="">Choisir…</option>
-            {zones.map((z) => (
-              <option key={z.governorate} value={z.governorate}>
-                {z.governorate} — livraison {formatPrice(z.fee)} DT{z.delay ? ` · ${z.delay}` : ""}
-              </option>
-            ))}
-          </select>
+            options={zones.map((z) => ({
+              value: z.governorate,
+              label: z.governorate,
+              hint: `Livraison ${formatPrice(z.fee)} DT${z.delay ? ` · ${z.delay}` : ""}`,
+            }))}
+          />
           <FieldError id="governorate-err" message={errors.governorate} />
         </label>
         <label className="field-label">

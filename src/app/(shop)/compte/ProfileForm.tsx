@@ -5,6 +5,7 @@ import { GOVERNORATES } from "@/lib/constants";
 import type { Profile } from "@/lib/types";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { Select } from "@/components/ui/Select";
 import { useFormAction } from "@/lib/use-form-action";
 
 export function ProfileForm({ profile }: { profile: Profile | null }) {
@@ -24,10 +25,11 @@ export function ProfileForm({ profile }: { profile: Profile | null }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="field-label">
           Gouvernorat
-          <select name="governorate" defaultValue={profile?.governorate ?? ""} className="input">
-            <option value="">—</option>
-            {GOVERNORATES.map((g) => <option key={g} value={g}>{g}</option>)}
-          </select>
+          <Select
+            name="governorate"
+            defaultValue={profile?.governorate ?? ""}
+            options={[{ value: "", label: "Non renseigné" }, ...GOVERNORATES.map((g) => ({ value: g, label: g }))]}
+          />
         </label>
         <label className="field-label">
           Ville / délégation

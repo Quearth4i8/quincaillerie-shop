@@ -7,6 +7,7 @@ import { deleteCategory, saveCategory } from "@/app/actions/catalog";
 import { CATEGORY_ICONS, CategoryIcon } from "@/lib/icons";
 import type { Category } from "@/lib/types";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { Select } from "@/components/ui/Select";
 
 export function CategoryRow({ category, productCount }: { category?: Category; productCount: number }) {
   const [state, action] = useActionState(saveCategory, null);
@@ -38,9 +39,20 @@ export function CategoryRow({ category, productCount }: { category?: Category; p
       </label>
       <label className="field-label" htmlFor={`${idPrefix}-icon`}>
         Icône
-        <select id={`${idPrefix}-icon`} name="icon" value={icon} onChange={(e) => setIcon(e.target.value)} className="input h-11 w-auto">
-          {Object.entries(CATEGORY_ICONS).map(([key, { label }]) => <option key={key} value={key}>{label}</option>)}
-        </select>
+        <Select
+          id={`${idPrefix}-icon`}
+          name="icon"
+          value={icon}
+          onChange={setIcon}
+          className="w-48"
+          triggerClassName="h-11"
+          searchable={false}
+          options={Object.entries(CATEGORY_ICONS).map(([key, { label }]) => ({
+            value: key,
+            label,
+            icon: <CategoryIcon name={key} className="size-[18px]" />,
+          }))}
+        />
       </label>
       <label className="field-label w-24" htmlFor={`${idPrefix}-order`}>
         Ordre

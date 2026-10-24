@@ -10,6 +10,8 @@ import { PRODUCT_IMAGES_BUCKET } from "@/lib/constants";
 import type { Category, Product, Spec } from "@/lib/types";
 import { FieldError, FormMessage } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { Select } from "@/components/ui/Select";
+import { CategoryIcon } from "@/lib/icons";
 import { useFormAction } from "@/lib/use-form-action";
 
 const MAX_IMAGE_MB = 5;
@@ -74,10 +76,14 @@ export function ProductForm({ categories, product }: { categories: Category[]; p
           </label>
           <label className="field-label">
             Rayon
-            <select name="category_id" defaultValue={product?.category_id ?? ""} className="input">
-              <option value="">— Aucun —</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <Select
+              name="category_id"
+              defaultValue={product?.category_id ?? ""}
+              options={[
+                { value: "", label: "— Aucun —" },
+                ...categories.map((c) => ({ value: c.id, label: c.name, icon: <CategoryIcon name={c.icon} className="size-4" /> })),
+              ]}
+            />
           </label>
           <label className="field-label">
             <span>Référence <span className="font-normal text-muted">(facultatif)</span></span>

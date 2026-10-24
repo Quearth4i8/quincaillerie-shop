@@ -5,13 +5,14 @@ import { toast } from "sonner";
 import { setUserRole } from "@/app/actions/admin";
 import { ROLE_LABEL } from "@/lib/format";
 import type { UserRole } from "@/lib/types";
+import { Select } from "@/components/ui/Select";
 
 export function RoleSelect({ userId, role, name }: { userId: string; role: UserRole; name: string }) {
   const [optimistic, setOptimistic] = useOptimistic(role);
   const [pending, startTransition] = useTransition();
 
-  function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const next = e.target.value as UserRole;
+  function onChange(value: string) {
+    const next = value as UserRole;
     if (next === "admin" && !window.confirm(`Donner tous les droits d’administration à ${name} ?`)) return;
     startTransition(async () => {
       setOptimistic(next);
@@ -22,13 +23,14 @@ export function RoleSelect({ userId, role, name }: { userId: string; role: UserR
   }
 
   return (
-    <>
-      <label htmlFor={`role-${userId}`} className="sr-only">Rôle de {name}</label>
-      <select id={`role-${userId}`} value={optimistic} onChange={onChange} disabled={pending} className="input h-10 w-auto">
-        {(Object.keys(ROLE_LABEL) as UserRole[]).map((r) => (
-          <option key={r} value={r}>{ROLE_LABEL[r]}</option>
-        ))}
-      </select>
-    </>
+    <Select
+      aria-label={`Rôle de ${name}`}
+      value={optimistic}
+      onChange={onChange}
+      disabled={pending}
+      className="w-44"
+      triggerClassName="h-10"
+      options={(Object.keys(ROLE_LABEL) as UserRole[]).map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
+    />
   );
 }

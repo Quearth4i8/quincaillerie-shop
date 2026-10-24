@@ -23,12 +23,11 @@ export default async function HomePage() {
 
   const tel = telHref(settings.phone);
   const wa = whatsappHref(settings.whatsapp, "Bonjour, je voudrais passer une commande.");
-  const [firstCat, secondCat] = categories;
 
   return (
     <>
       {/* Hero */}
-      <section className="container-page grid gap-5 pt-6 md:pt-8 lg:grid-cols-[1.15fr_1fr]">
+      <section className="container-page pt-6 md:pt-8">
         <div className="flex min-h-[380px] flex-col justify-between gap-8 rounded-[18px] bg-ink p-7 text-white sm:p-11">
           <div className="flex flex-col gap-4">
             <span className="self-start rounded-md bg-accent px-3 py-1.5 text-sm font-bold tracking-wide text-ink">
@@ -57,24 +56,6 @@ export default async function HomePage() {
               Voir le catalogue
             </Link>
           </div>
-        </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2">
-          {[firstCat, secondCat].filter(Boolean).map((c, i) => (
-            <Link
-              key={c.id}
-              href={`/produits?categorie=${c.slug}`}
-              className={`relative flex min-h-[180px] items-end overflow-hidden rounded-[18px] p-7 transition hover:brightness-[0.98] ${i === 0 ? "bg-[#e4e3dc]" : "bg-accent"}`}
-            >
-              <CategoryIcon
-                name={c.icon}
-                className={`absolute right-6 top-1/2 size-24 -translate-y-1/2 ${i === 0 ? "text-zinc-500" : "text-[#6b5300]"}`}
-              />
-              <span className="relative flex flex-col gap-1.5">
-                <span className="heading-display text-[34px]">{c.name}</span>
-                <span className="font-semibold underline">Découvrir le rayon →</span>
-              </span>
-            </Link>
-          ))}
         </div>
       </section>
 

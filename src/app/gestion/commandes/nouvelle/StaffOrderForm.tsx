@@ -3,11 +3,12 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { LoaderCircle, Minus, Plus, Search, Trash } from "lucide-react";
+import { LoaderCircle, MessageCircle, Minus, Phone, Plus, Search, Trash } from "lucide-react";
 import { createStaffOrder } from "@/app/actions/orders";
 import { formatPrice } from "@/lib/format";
 import type { DeliveryZone } from "@/lib/types";
 import { CustomerFields } from "@/components/shop/CustomerFields";
+import { Select } from "@/components/ui/Select";
 
 type P = { id: string; name: string; reference: string | null; price: number; stock: number };
 type Line = { product: P; quantity: number };
@@ -142,10 +143,14 @@ export function StaffOrderForm({ products, zones }: { products: P[]; zones: Deli
       <aside className="card flex flex-col gap-4 p-5 xl:sticky xl:top-6">
         <label className="field-label">
           Canal de la commande
-          <select name="source" className="input" defaultValue="phone">
-            <option value="phone">Appel téléphonique</option>
-            <option value="whatsapp">WhatsApp</option>
-          </select>
+          <Select
+            name="source"
+            defaultValue="phone"
+            options={[
+              { value: "phone", label: "Appel téléphonique", icon: <Phone className="size-4" aria-hidden="true" /> },
+              { value: "whatsapp", label: "WhatsApp", icon: <MessageCircle className="size-4 text-whatsapp" aria-hidden="true" /> },
+            ]}
+          />
         </label>
         <div className="flex flex-col gap-1.5 border-t border-line pt-3">
           <div className="flex justify-between"><span className="text-muted">Sous-total</span><span className="font-semibold">{formatPrice(subtotal)} DT</span></div>
