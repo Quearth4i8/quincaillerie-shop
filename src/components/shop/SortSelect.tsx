@@ -2,8 +2,12 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Select } from "@/components/ui/Select";
+import { useI18n } from "@/i18n/I18nProvider";
+
+const SORTS = ["populaire", "prix-asc", "prix-desc", "nouveau"];
 
 export function SortSelect({ value }: { value: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -18,19 +22,14 @@ export function SortSelect({ value }: { value: string }) {
 
   return (
     <div className="flex items-center gap-2.5">
-      <label htmlFor="tri" className="font-semibold">Trier par</label>
+      <label htmlFor="tri" className="font-semibold">{t.catalog.sortBy}</label>
       <Select
         id="tri"
         value={value}
         onChange={onChange}
         className="w-52"
         triggerClassName="h-11"
-        options={[
-          { value: "populaire", label: "Les plus demandés" },
-          { value: "prix-asc", label: "Prix croissant" },
-          { value: "prix-desc", label: "Prix décroissant" },
-          { value: "nouveau", label: "Nouveautés" },
-        ]}
+        options={SORTS.map((s) => ({ value: s, label: t.catalog.sort[s] }))}
       />
     </div>
   );

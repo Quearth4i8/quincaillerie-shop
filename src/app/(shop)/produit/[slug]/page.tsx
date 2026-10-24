@@ -9,6 +9,8 @@ import type { Product } from "@/lib/types";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { BuyBox } from "@/components/shop/BuyBox";
 import { ProductCard, type CardProduct } from "@/components/shop/ProductCard";
+import { getT } from "@/i18n/server";
+import { categoryName } from "@/i18n/config";
 
 type Params = Promise<{ slug: string }>;
 
@@ -16,7 +18,7 @@ async function getProduct(slug: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
-    .select("*, category:categories(name, slug)")
+    .select("*, category:categories(*)")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle<Product>();
@@ -25,7 +27,7 @@ async function getProduct(slug: string) {
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const product = await getProduct((await params).slug);
-  if (!product) return { title: "Produit introuvable" };
+  if (!product) return { title: (await getT()).t.meta.productNotFound };
   return {
     title: product.name,
     description: product.description ?? undefined,
@@ -35,7 +37,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function ProductPage({ params }: { params: Params }) {
   const { slug } = await params;
-  const [product, settings] = await Promise.all([getProduct(slug), getSettings()]);
+  const [product, settings, { t, locale }] = await Promise.all([getProduct(slug), getSettings(), getT()]);
   if (!product) notFound();
 
   const supabase = await createClient();
@@ -52,17 +54,19 @@ export default async function ProductPage({ params }: { params: Params }) {
 
   const off = discountPercent(product.price, product.old_price);
   const tel = telHref(settings.phone);
-  const wa = whatsappHref(settings.whatsapp, `Bonjour, je voudrais commander : ${product.name} (${formatPrice(product.price)} DT)`);
+  const wa = whatsappHref(settings.whatsapp, t.product.waOrder(product.name, formatPrice(product.price)));
+  const p = t.product;
+  const cur = t.common.currency;
   const specs = Array.isArray(product.specs) ? product.specs : [];
 
   return (
     <div className="container-page py-6">
-      <nav aria-label="Fil d’Ariane" className="mb-5 flex flex-wrap gap-2 text-sm text-muted">
-        <Link href="/" className="hover:underline">Accueil</Link>
+      <nav aria-label={t.common.breadcrumb} className="mb-5 flex flex-wrap gap-2 text-sm text-muted">
+        <Link href="/" className="hover:underline">{t.common.home}</Link>
         <span aria-hidden="true">/</span>
         {product.category && (
           <>
-            <Link href={`/produits?categorie=${product.category.slug}`} className="hover:underline">{product.category.name}</Link>
+            <Link href={`/produits?categorie=${product.category.slug}`} className="hover:underline">{categoryName(product.category, locale)}</Link>
             <span aria-hidden="true">/</span>
           </>
         )}
@@ -70,26 +74,26 @@ export default async function ProductPage({ params }: { params: Params }) {
       </nav>
 
       <div className="grid items-start gap-8 lg:grid-cols-2">
-        <ProductGallery images={product.images} name={product.name} badge={product.badge ?? (off ? `PROMO −${off}%` : null)} />
+        <ProductGallery images={product.images} name={product.name} badge={product.badge ?? (off ? p.promo(off) : null)} />
 
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <span className="font-semibold text-muted">
-              {product.category?.name}
-              {product.reference && ` · Réf. ${product.reference}`}
+              {product.category && categoryName(product.category, locale)}
+              {product.reference && ` · ${p.reference(product.reference)}`}
             </span>
             <h1 className="heading-display text-4xl sm:text-5xl">{product.name}</h1>
           </div>
 
           <div className="flex flex-wrap items-baseline gap-x-4">
-            <span className="heading-display text-[56px]">
-              {formatPrice(product.price)} <span className="text-3xl">DT</span>
+            <span className="heading-display whitespace-nowrap text-[56px]">
+              {formatPrice(product.price)} <span className="text-3xl">{cur}</span>
             </span>
-            {off && <span className="text-xl text-muted line-through">{formatPrice(product.old_price)} DT</span>}
+            {off && <span className="whitespace-nowrap text-xl text-muted line-through">{formatPrice(product.old_price)} {cur}</span>}
           </div>
 
           {product.highlights.length > 0 && (
-            <ul className="flex list-disc flex-col gap-1.5 pl-5 leading-relaxed">
+            <ul className="flex list-disc flex-col gap-1.5 ps-5 leading-relaxed">
               {product.highlights.map((h) => <li key={h}>{h}</li>)}
             </ul>
           )}
@@ -97,10 +101,10 @@ export default async function ProductPage({ params }: { params: Params }) {
           {product.stock > 0 ? (
             <span className="flex items-center gap-2 font-bold text-ok">
               <Check className="size-5" aria-hidden="true" />
-              {product.stock > 5 ? "En stock · prêt à livrer" : `Plus que ${product.stock} en stock`}
+              {product.stock > 5 ? p.readyToShip : p.onlyLeft(product.stock)}
             </span>
           ) : (
-            <span className="font-bold text-danger">Rupture de stock — appelez-nous pour le réapprovisionnement</span>
+            <span className="font-bold text-danger">{p.outOfStockCall}</span>
           )}
 
           <BuyBox
@@ -110,26 +114,26 @@ export default async function ProductPage({ params }: { params: Params }) {
           <div className="grid gap-3 sm:grid-cols-2">
             <a href={tel} className="btn-dark h-14 text-[17px]">
               <Phone className="size-5" aria-hidden="true" />
-              Commander par téléphone
+              {p.orderPhone}
             </a>
             <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-whatsapp h-14 text-[17px]">
               <MessageCircle className="size-5" aria-hidden="true" />
-              Commander sur WhatsApp
+              {p.orderWhatsapp}
             </a>
           </div>
 
           <div className="card divide-y divide-line px-5">
             <p className="flex items-center gap-3.5 py-3.5">
               <Truck className="size-7 shrink-0" strokeWidth={1.6} aria-hidden="true" />
-              <span><strong>Livraison à domicile</strong> · partout en Tunisie, frais selon le gouvernorat</span>
+              <span><strong>{p.deliveryTitle}</strong> · {p.deliveryText}</span>
             </p>
             <p className="flex items-center gap-3.5 py-3.5">
               <Banknote className="size-7 shrink-0" strokeWidth={1.6} aria-hidden="true" />
-              <span><strong>Paiement à la livraison</strong> · vous payez en recevant le colis</span>
+              <span><strong>{p.codTitle}</strong> · {p.codText}</span>
             </p>
             <p className="flex items-center gap-3.5 py-3.5">
               <ShieldCheck className="size-7 shrink-0" strokeWidth={1.6} aria-hidden="true" />
-              <span><strong>Commande confirmée par appel</strong> · avant tout envoi</span>
+              <span><strong>{p.confirmTitle}</strong> · {p.confirmText}</span>
             </p>
           </div>
         </div>
@@ -139,13 +143,13 @@ export default async function ProductPage({ params }: { params: Params }) {
         <section className="mt-12 grid gap-8 lg:grid-cols-2">
           {specs.length > 0 && (
             <div>
-              <h2 className="heading-display mb-4 text-[34px]">Caractéristiques</h2>
+              <h2 className="heading-display mb-4 text-[34px]">{p.specs}</h2>
               <div className="card overflow-hidden">
                 <table className="w-full border-collapse">
                   <tbody>
                     {specs.map((s, i) => (
                       <tr key={i} className="border-b border-line last:border-0">
-                        <th scope="row" className="w-[45%] px-5 py-3.5 text-left font-semibold text-muted">{s.label}</th>
+                        <th scope="row" className="w-[45%] px-5 py-3.5 text-start font-semibold text-muted">{s.label}</th>
                         <td className="px-5 py-3.5 font-semibold">{s.value}</td>
                       </tr>
                     ))}
@@ -156,10 +160,10 @@ export default async function ProductPage({ params }: { params: Params }) {
           )}
           {product.description && (
             <div>
-              <h2 className="heading-display mb-4 text-[34px]">Description</h2>
+              <h2 className="heading-display mb-4 text-[34px]">{p.description}</h2>
               <p className="whitespace-pre-line text-[17px] leading-relaxed">{product.description}</p>
               <p className="mt-4 text-[17px] leading-relaxed text-muted">
-                Une question sur ce produit ? Appelez-nous, on vous répond avant que vous commandiez.
+                {p.question}
               </p>
             </div>
           )}
@@ -168,7 +172,7 @@ export default async function ProductPage({ params }: { params: Params }) {
 
       {related && related.length > 0 && (
         <section className="mt-14">
-          <h2 className="heading-display mb-5 text-4xl">Dans le même rayon</h2>
+          <h2 className="heading-display mb-5 text-4xl">{p.related}</h2>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {related.map((p) => <ProductCard key={p.id} product={p} phoneHref={tel} />)}
           </div>

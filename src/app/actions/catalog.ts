@@ -120,6 +120,7 @@ export async function deleteProduct(id: string) {
 const categorySchema = z.object({
   id: z.uuid().optional(),
   name: z.string().trim().min(2, "Nom requis").max(80),
+  name_ar: z.string().trim().max(80).transform((v) => v || null),
   icon: z.string().refine((v) => v in CATEGORY_ICONS, "Icône inconnue"),
   sort_order: z.coerce.number().int().min(0).max(999),
 });

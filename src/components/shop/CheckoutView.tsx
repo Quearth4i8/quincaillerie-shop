@@ -9,6 +9,7 @@ import { cartCount, cartSubtotal, useCart, useHydrated } from "@/store/cart";
 import { formatPrice, telHref } from "@/lib/format";
 import type { DeliveryZone } from "@/lib/types";
 import { placeOrder } from "@/app/actions/orders";
+import { useI18n } from "@/i18n/I18nProvider";
 import { ProductImage } from "./ProductImage";
 import { CustomerFields, type CustomerDefaults } from "./CustomerFields";
 
@@ -23,6 +24,9 @@ export function CheckoutView({
   defaults: CustomerDefaults;
   signedIn: boolean;
 }) {
+  const { t } = useI18n();
+  const c = t.checkout;
+  const cur = t.common.currency;
   const router = useRouter();
   const hydrated = useHydrated();
   const { items, setQuantity, remove, clear } = useCart();
@@ -33,7 +37,7 @@ export function CheckoutView({
   if (!hydrated) {
     return (
       <div className="flex justify-center py-24">
-        <LoaderCircle className="size-8 animate-spin text-muted" aria-label="Chargement du panier" />
+        <LoaderCircle className="size-8 animate-spin text-muted" aria-label={c.loadingCart} />
       </div>
     );
   }
@@ -44,13 +48,13 @@ export function CheckoutView({
         <span className="flex size-16 items-center justify-center rounded-full bg-ground">
           <ShoppingCart className="size-8" aria-hidden="true" />
         </span>
-        <h1 className="heading-display text-4xl">Votre panier est vide</h1>
-        <p className="text-muted">Parcourez le catalogue, ou appelez-nous : on prépare la commande pour vous.</p>
+        <h1 className="heading-display text-4xl">{c.emptyTitle}</h1>
+        <p className="text-muted">{c.emptyText}</p>
         <div className="flex flex-wrap justify-center gap-3">
-          <Link href="/produits" className="btn-accent h-12">Voir le catalogue</Link>
+          <Link href="/produits" className="btn-accent h-12">{t.common.seeCatalogue}</Link>
           <a href={telHref(phone)} className="btn-outline h-12">
             <Phone className="size-4" aria-hidden="true" />
-            {phone}
+            <span dir="ltr">{phone}</span>
           </a>
         </div>
       </div>
@@ -80,10 +84,8 @@ export function CheckoutView({
 
   return (
     <>
-      <h1 className="heading-display text-4xl sm:text-5xl">Finaliser la commande</h1>
-      <p className="mb-7 mt-2 text-[17px] text-muted">
-        Pas de carte bancaire{signedIn ? "" : ", pas besoin de compte"}. Laissez vos coordonnées, on vous appelle pour confirmer.
-      </p>
+      <h1 className="heading-display text-4xl sm:text-5xl">{c.title}</h1>
+      <p className="mb-7 mt-2 text-[17px] text-muted">{c.intro(signedIn)}</p>
 
       <div className="flex flex-col-reverse gap-7 lg:flex-row lg:items-start">
         <form onSubmit={onSubmit} className="flex min-w-0 flex-1 flex-col gap-5" noValidate>
@@ -96,12 +98,12 @@ export function CheckoutView({
           />
 
           <fieldset className="card flex flex-col gap-3 p-5 sm:p-6">
-            <legend className="heading-display px-1.5 text-[26px]">3. Paiement</legend>
+            <legend className="heading-display px-1.5 text-[26px]">{c.paymentLegend}</legend>
             <label className="flex cursor-pointer items-center gap-3.5 rounded-xl border-2 border-ink p-4">
               <input type="radio" name="payment" value="cod" defaultChecked className="size-5 accent-ink" />
               <span className="flex flex-col">
-                <span className="text-[17px] font-bold">Paiement à la livraison</span>
-                <span className="text-[15px] text-muted">En espèces, à la réception. Vous vérifiez la marchandise avant de payer.</span>
+                <span className="text-[17px] font-bold">{c.codTitle}</span>
+                <span className="text-[15px] text-muted">{c.codText}</span>
               </span>
             </label>
           </fieldset>
@@ -110,20 +112,20 @@ export function CheckoutView({
             {pending ? (
               <>
                 <LoaderCircle className="size-5 animate-spin" aria-hidden="true" />
-                Envoi en cours…
+                {c.sending}
               </>
             ) : (
-              <>Confirmer la commande · {formatPrice(total)} DT</>
+              <>{c.confirm(formatPrice(total))}</>
             )}
           </button>
           <p className="text-center text-[15px] text-muted">
-            Vous préférez parler à quelqu’un ?{" "}
-            <a href={telHref(phone)} className="font-bold text-ink underline">Appelez le {phone}</a>
+            {c.preferTalk}{" "}
+            <a href={telHref(phone)} className="font-bold text-ink underline">{c.callNumber(phone)}</a>
           </p>
         </form>
 
         <aside aria-labelledby="summary" className="card flex flex-col gap-4 p-5 sm:p-6 lg:sticky lg:top-40 lg:w-[380px]">
-          <h2 id="summary" className="heading-display text-[26px]">Votre panier ({cartCount(items)})</h2>
+          <h2 id="summary" className="heading-display text-[26px]">{c.summary(cartCount(items))}</h2>
           <ul className="flex flex-col gap-4">
             {items.map((i) => (
               <li key={i.productId} className="flex items-center gap-3">
@@ -138,7 +140,7 @@ export function CheckoutView({
                     <button
                       type="button"
                       onClick={() => setQuantity(i.productId, i.quantity - 1)}
-                      aria-label={`Retirer un ${i.name}`}
+                      aria-label={c.removeOne(i.name)}
                       className="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-line-strong hover:bg-ground"
                     >
                       <Minus className="size-4" aria-hidden="true" />
@@ -148,7 +150,7 @@ export function CheckoutView({
                       type="button"
                       onClick={() => setQuantity(i.productId, i.quantity + 1)}
                       disabled={i.quantity >= i.stock}
-                      aria-label={`Ajouter un ${i.name}`}
+                      aria-label={c.addOne(i.name)}
                       className="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-line-strong hover:bg-ground disabled:opacity-40"
                     >
                       <Plus className="size-4" aria-hidden="true" />
@@ -156,36 +158,36 @@ export function CheckoutView({
                     <button
                       type="button"
                       onClick={() => remove(i.productId)}
-                      aria-label={`Supprimer ${i.name} du panier`}
-                      className="ml-1 flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted hover:bg-ground hover:text-danger"
+                      aria-label={c.removeItem(i.name)}
+                      className="ms-1 flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted hover:bg-ground hover:text-danger"
                     >
                       <Trash className="size-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
-                <span className="whitespace-nowrap font-bold">{formatPrice(i.price * i.quantity)} DT</span>
+                <span className="whitespace-nowrap font-bold">{formatPrice(i.price * i.quantity)} {cur}</span>
               </li>
             ))}
           </ul>
           <div className="flex flex-col gap-2 border-t border-line pt-3.5">
             <div className="flex justify-between">
-              <span className="text-muted">Sous-total</span>
-              <span className="font-semibold">{formatPrice(subtotal)} DT</span>
+              <span className="text-muted">{c.subtotal}</span>
+              <span className="whitespace-nowrap font-semibold">{formatPrice(subtotal)} {cur}</span>
             </div>
             <div className="flex justify-between gap-3">
-              <span className="text-muted">Livraison</span>
-              <span className="text-right font-semibold">
-                {fee === null ? "Choisissez le gouvernorat" : `${formatPrice(fee)} DT`}
+              <span className="text-muted">{c.delivery}</span>
+              <span className="text-end font-semibold">
+                {fee === null ? c.chooseGov : `${formatPrice(fee)} ${cur}`}
               </span>
             </div>
           </div>
           <div className="flex items-baseline justify-between border-t-2 border-ink pt-3.5">
-            <span className="text-lg font-bold">Total</span>
-            <span className="heading-display text-4xl">{formatPrice(total)} DT</span>
+            <span className="text-lg font-bold">{c.total}</span>
+            <span className="heading-display whitespace-nowrap text-4xl">{formatPrice(total)} {cur}</span>
           </div>
           <p className="flex items-start gap-3 rounded-xl bg-ground p-3.5 text-[15px] leading-snug">
             <Phone className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-            Après votre commande, nous vous appelons pour confirmer le total et le créneau de livraison.
+            {c.afterOrder}
           </p>
         </aside>
       </div>

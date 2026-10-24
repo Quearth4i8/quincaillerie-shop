@@ -5,8 +5,11 @@ import { signUp } from "@/app/actions/auth";
 import { FieldError, FormMessage } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { useFormAction } from "@/lib/use-form-action";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function SignUpForm() {
+  const { t } = useI18n();
+  const a = t.auth;
   const { state, onSubmit, pending } = useFormAction(signUp);
 
   if (state?.ok) return <FormMessage state={state} />;
@@ -15,29 +18,29 @@ export function SignUpForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <FormMessage state={state} />
       <label className="field-label">
-        Nom et prénom
+        {t.common.fullName}
         <input name="full_name" required autoComplete="name" className="input" />
         <FieldError state={state} name="full_name" />
       </label>
       <label className="field-label">
-        <span>Téléphone <span className="font-normal text-muted">(facultatif)</span></span>
-        <input name="phone" type="tel" autoComplete="tel" placeholder="XX XXX XXX" className="input" />
+        <span>{t.common.phone} <span className="font-normal text-muted">{t.common.optional}</span></span>
+        <input name="phone" type="tel" dir="ltr" autoComplete="tel" placeholder="XX XXX XXX" className="input" />
       </label>
       <label className="field-label">
-        E-mail
-        <input name="email" type="email" required autoComplete="email" className="input" />
+        {t.common.email}
+        <input name="email" type="email" dir="ltr" required autoComplete="email" className="input" />
         <FieldError state={state} name="email" />
       </label>
       <label className="field-label">
-        Mot de passe
+        {t.common.password}
         <input name="password" type="password" required minLength={8} autoComplete="new-password" className="input" />
-        <span className="text-sm font-normal text-muted">8 caractères minimum</span>
+        <span className="text-sm font-normal text-muted">{a.min8}</span>
         <FieldError state={state} name="password" />
       </label>
-      <SubmitButton pending={pending} className="btn-accent h-13 text-lg" pendingLabel="Création…">Créer mon compte</SubmitButton>
+      <SubmitButton pending={pending} className="btn-accent h-13 text-lg" pendingLabel={a.creating}>{a.createMine}</SubmitButton>
       <p className="text-center text-muted">
-        Déjà inscrit ?{" "}
-        <Link href="/connexion" className="font-bold text-ink underline">Se connecter</Link>
+        {a.already}{" "}
+        <Link href="/connexion" className="font-bold text-ink underline">{a.signIn}</Link>
       </p>
     </form>
   );

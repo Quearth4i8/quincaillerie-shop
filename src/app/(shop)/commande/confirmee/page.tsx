@@ -4,18 +4,22 @@ import { Check } from "lucide-react";
 import { getSettings } from "@/lib/data";
 import { getCurrentUser } from "@/lib/auth";
 import { formatPrice, telHref } from "@/lib/format";
+import { getT } from "@/i18n/server";
 
-export const metadata: Metadata = { title: "Commande reçue" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getT()).t.meta.orderReceived };
+}
 
 export default async function OrderConfirmedPage({
   searchParams,
 }: {
   searchParams: Promise<{ n?: string; t?: string }>;
 }) {
-  const { n, t } = await searchParams;
-  const [settings, user] = await Promise.all([getSettings(), getCurrentUser()]);
+  const { n, t: totalParam } = await searchParams;
+  const [settings, user, { t }] = await Promise.all([getSettings(), getCurrentUser(), getT()]);
+  const c = t.confirmed;
   const number = n && /^\d+$/.test(n) ? n : null;
-  const total = t && !Number.isNaN(Number(t)) ? Number(t) : null;
+  const total = totalParam && !Number.isNaN(Number(totalParam)) ? Number(totalParam) : null;
 
   return (
     <div className="container-page py-12">
@@ -23,23 +27,23 @@ export default async function OrderConfirmedPage({
         <span className="animate-pop flex size-18 items-center justify-center rounded-full bg-accent">
           <Check className="size-9" strokeWidth={2.6} aria-hidden="true" />
         </span>
-        <h1 className="heading-display text-4xl sm:text-5xl">Merci, commande reçue !</h1>
+        <h1 className="heading-display text-4xl sm:text-5xl">{c.title}</h1>
         <p className="text-lg leading-relaxed text-ink-soft">
-          {number && <>Commande n° <strong>{number}</strong>. </>}
-          Nous vous appelons très vite au numéro indiqué pour confirmer le total et l’heure de livraison.
+          {number && <>{c.number} <strong>{number}</strong>. </>}
+          {c.callSoon}
         </p>
         {total !== null && (
           <p className="text-lg">
-            Total à payer à la livraison : <strong>{formatPrice(total)} DT</strong>
+            {c.totalToPay} <strong className="whitespace-nowrap">{formatPrice(total)} {t.common.currency}</strong>
           </p>
         )}
-        <p className="text-muted">Paiement en espèces à la réception du colis.</p>
+        <p className="text-muted">{c.cash}</p>
         <div className="mt-2 flex flex-wrap justify-center gap-3">
-          <Link href="/" className="btn-dark h-13 px-6">Retour à la boutique</Link>
+          <Link href="/" className="btn-dark h-13 px-6">{c.back}</Link>
           {user ? (
-            <Link href="/compte" className="btn-outline h-13 px-6">Suivre mes commandes</Link>
+            <Link href="/compte" className="btn-outline h-13 px-6">{c.track}</Link>
           ) : (
-            <a href={telHref(settings.phone)} className="btn-outline h-13 px-6">Une question ? {settings.phone}</a>
+            <a href={telHref(settings.phone)} className="btn-outline h-13 px-6">{t.common.question(settings.phone)}</a>
           )}
         </div>
       </div>

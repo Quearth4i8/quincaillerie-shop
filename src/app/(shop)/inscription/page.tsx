@@ -3,15 +3,18 @@ import { redirect } from "next/navigation";
 import { getCurrentUser, homeForRole } from "@/lib/auth";
 import { AuthCard } from "@/components/shop/AuthCard";
 import { SignUpForm } from "./SignUpForm";
+import { getT } from "@/i18n/server";
 
-export const metadata: Metadata = { title: "Créer un compte" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getT()).t.meta.signup };
+}
 
 export default async function SignUpPage() {
-  const user = await getCurrentUser();
+  const [user, { t }] = await Promise.all([getCurrentUser(), getT()]);
   if (user) redirect(homeForRole(user.role));
 
   return (
-    <AuthCard title="Créer un compte" subtitle="Retrouvez vos commandes et vos adresses de livraison.">
+    <AuthCard title={t.auth.signupTitle} subtitle={t.auth.signupSubtitle}>
       <SignUpForm />
     </AuthCard>
   );

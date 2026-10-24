@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import type { ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { ChatBubbles } from "@/components/ui/ChatBubbles";
+import { useI18n } from "@/i18n/I18nProvider";
+import { translateDbError } from "@/i18n/config";
 
 const TOKEN_KEY = "chat-token";
 const OPEN_POLL_MS = 4000;
@@ -41,6 +43,7 @@ export function FloatingActions({
   defaultName?: string | null;
   defaultPhone?: string | null;
 }) {
+  const { t } = useI18n();
   const [showTop, setShowTop] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -52,11 +55,11 @@ export function FloatingActions({
   }, []);
 
   return (
-    <div className="pointer-events-none fixed right-4 bottom-24 z-40 flex flex-col items-end gap-3 md:right-6 md:bottom-6">
+    <div className="pointer-events-none fixed end-4 bottom-24 z-40 flex flex-col items-end gap-3 md:end-6 md:bottom-6">
       <button
         type="button"
         onClick={() => window.scrollTo({ top: 0 })}
-        aria-label="Remonter en haut de la page"
+        aria-label={t.scrollTop}
         tabIndex={showTop ? 0 : -1}
         className={cn(
           "flex size-12 cursor-pointer items-center justify-center rounded-full border-2 border-ink bg-white text-ink shadow-lg transition hover:bg-ground",
@@ -96,6 +99,8 @@ function ChatWidget({
   defaultName: string;
   defaultPhone: string;
 }) {
+  const { t, locale } = useI18n();
+  const c = t.chat;
   const supabase = useRef(createClient()).current;
   const [token, setToken] = useState<string | null>(null);
   const [unread, setUnread] = useState(0);
@@ -175,21 +180,21 @@ function ChatWidget({
     setError(null);
 
     if (!token && name.trim().length < 2) {
-      setError("Indiquez votre nom pour commencer.");
+      setError(c.nameFirst);
       return;
     }
 
     setSending(true);
     if (token) {
       const { error } = await supabase.rpc("chat_send", { p_token: token, p_body: body });
-      if (error) setError(error.message);
+      if (error) setError(translateDbError(error.message, locale));
       else {
         setDraft("");
         await loadMessages(token);
       }
     } else {
       const { data, error } = await supabase.rpc("chat_start", { p_name: name, p_phone: phone, p_body: body });
-      if (error) setError(error.message);
+      if (error) setError(translateDbError(error.message, locale));
       else {
         const t = data as string;
         saveToken(t);
@@ -205,21 +210,21 @@ function ChatWidget({
       {open && (
         <section
           role="dialog"
-          aria-label="Discuter avec le service client"
-          className="animate-pop pointer-events-auto flex h-[min(560px,calc(100dvh-9rem))] w-[min(380px,calc(100vw-2rem))] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-line bg-ground shadow-2xl"
+          aria-label={c.dialogLabel}
+          className="animate-pop pointer-events-auto flex h-[min(560px,calc(100dvh-9rem))] w-[min(380px,calc(100vw-2rem))] origin-bottom-right rtl:origin-bottom-left flex-col overflow-hidden rounded-2xl border border-line bg-ground shadow-2xl"
         >
           <header className="flex items-center gap-3 bg-ink px-4 py-3 text-white">
             <span className="flex size-10 items-center justify-center rounded-full bg-accent text-ink">
               <MessageSquareText className="size-5" aria-hidden="true" />
             </span>
             <div className="flex-1 leading-tight">
-              <p className="font-bold">{shopName} · Service client</p>
-              <p className="text-sm text-zinc-300">Nous répondons pendant les heures d’ouverture</p>
+              <p className="font-bold">{c.title(shopName)}</p>
+              <p className="text-sm text-zinc-300">{c.subtitle}</p>
             </div>
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              aria-label="Fermer la discussion"
+              aria-label={c.closeLabel}
               className="flex size-9 cursor-pointer items-center justify-center rounded-lg hover:bg-white/10"
             >
               <X className="size-5" aria-hidden="true" />
@@ -233,11 +238,11 @@ function ChatWidget({
             className="flex-1"
             empty={
               <div className="m-auto max-w-[280px] text-center text-sm text-muted">
-                <p className="font-semibold text-ink">Une question sur un produit ou une commande ?</p>
-                <p className="mt-1">Écrivez-nous ici, un vendeur vous répond directement.</p>
+                <p className="font-semibold text-ink">{c.emptyTitle}</p>
+                <p className="mt-1">{c.emptyText}</p>
                 <a href={whatsappUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 font-semibold text-whatsapp underline">
                   <MessageCircle className="size-4" aria-hidden="true" />
-                  Ou sur WhatsApp
+                  {c.orWhatsapp}
                 </a>
               </div>
             }
@@ -254,8 +259,8 @@ function ChatWidget({
               <div className="grid grid-cols-2 gap-2">
                 <input
                   className="input h-10 text-sm"
-                  placeholder="Votre nom *"
-                  aria-label="Votre nom"
+                  placeholder={c.namePlaceholder}
+                  aria-label={c.nameLabel}
                   autoComplete="name"
                   maxLength={120}
                   value={name}
@@ -263,9 +268,10 @@ function ChatWidget({
                 />
                 <input
                   className="input h-10 text-sm"
-                  placeholder="Téléphone (facultatif)"
-                  aria-label="Téléphone"
+                  placeholder={c.phonePlaceholder}
+                  aria-label={c.phoneLabel}
                   type="tel"
+                  dir="ltr"
                   autoComplete="tel"
                   maxLength={25}
                   value={phone}
@@ -278,8 +284,8 @@ function ChatWidget({
               <textarea
                 className="textarea max-h-32 min-h-11 flex-1 resize-none py-2.5 text-[15px]"
                 rows={1}
-                placeholder="Votre message…"
-                aria-label="Votre message"
+                placeholder={c.messagePlaceholder}
+                aria-label={c.messageLabel}
                 maxLength={2000}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
@@ -290,8 +296,8 @@ function ChatWidget({
                   }
                 }}
               />
-              <button type="submit" disabled={sending || !draft.trim()} aria-label="Envoyer" className="btn-accent size-11 shrink-0 px-0">
-                {sending ? <LoaderCircle className="size-5 animate-spin" aria-hidden="true" /> : <Send className="size-5" aria-hidden="true" />}
+              <button type="submit" disabled={sending || !draft.trim()} aria-label={c.send} className="btn-accent size-11 shrink-0 px-0">
+                {sending ? <LoaderCircle className="size-5 animate-spin" aria-hidden="true" /> : <Send className="size-5 rtl:-scale-x-100" aria-hidden="true" />}
               </button>
             </div>
           </form>
@@ -302,13 +308,13 @@ function ChatWidget({
         type="button"
         onClick={() => onOpenChange(!open)}
         aria-expanded={open}
-        aria-label={open ? "Fermer la discussion" : "Discuter avec nous"}
+        aria-label={open ? c.closeLabel : c.open}
         className="pointer-events-auto relative flex h-14 cursor-pointer items-center gap-2 rounded-full bg-accent px-5 font-bold text-ink shadow-lg transition hover:bg-accent-strong active:scale-[0.98]"
       >
         {open ? <X className="size-6" aria-hidden="true" /> : <MessageSquareText className="size-6" aria-hidden="true" />}
-        <span className="hidden sm:inline">{open ? "Fermer" : "Discuter avec nous"}</span>
+        <span className="hidden sm:inline">{open ? c.close : c.open}</span>
         {!open && unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-danger px-1.5 text-xs text-white">
+          <span className="absolute -end-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-danger px-1.5 text-xs text-white">
             {unread}
           </span>
         )}

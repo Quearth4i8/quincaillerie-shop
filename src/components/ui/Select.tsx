@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useSta
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export type SelectOption = {
   value: string;
@@ -47,7 +48,7 @@ export function Select({
   onChange,
   name,
   id,
-  placeholder = "Choisir…",
+  placeholder,
   required,
   disabled,
   searchable,
@@ -55,6 +56,7 @@ export function Select({
   triggerClassName,
   ...aria
 }: Props) {
+  const { t, dir } = useI18n();
   const autoId = useId();
   const triggerId = id ?? `select-${autoId}`;
   const listId = `${triggerId}-list`;
@@ -86,13 +88,14 @@ export function Select({
     if (!r) return;
     const below = window.innerHeight - r.bottom;
     const width = Math.max(r.width, 200);
-    const left = Math.min(r.left, window.innerWidth - width - 8);
+    // Line the menu up with the field's start edge (right edge in Arabic)
+    const left = Math.max(8, Math.min(dir === "rtl" ? r.right - width : r.left, window.innerWidth - width - 8));
     if (below < Math.min(MENU_MAX_HEIGHT, 240) && r.top > below) {
       setPos({ left, width, bottom: window.innerHeight - r.top + 6 });
     } else {
       setPos({ left, width, top: r.bottom + 6 });
     }
-  }, []);
+  }, [dir]);
 
   function openMenu() {
     if (disabled) return;
@@ -218,7 +221,7 @@ export function Select({
         onClick={() => (open ? close() : openMenu())}
         onKeyDown={onKeyDown}
         className={cn(
-          "input flex cursor-pointer items-center gap-2.5 text-left transition hover:border-ink disabled:cursor-not-allowed disabled:opacity-60",
+          "input flex cursor-pointer items-center gap-2.5 text-start transition hover:border-ink disabled:cursor-not-allowed disabled:opacity-60",
           open && "border-ink ring-2 ring-ink/15",
           aria["aria-invalid"] && "border-danger",
           triggerClassName,
@@ -226,7 +229,7 @@ export function Select({
       >
         {selected?.icon && <span className="flex shrink-0 text-ink">{selected.icon}</span>}
         <span className={cn("min-w-0 flex-1 truncate", !selected && "text-muted/80")}>
-          {selected ? selected.label : placeholder}
+          {selected ? selected.label : (placeholder ?? t.select.choose)}
         </span>
         <ChevronDown className={cn("size-4 shrink-0 text-muted transition-transform", open && "rotate-180")} aria-hidden="true" />
       </button>
@@ -240,7 +243,7 @@ export function Select({
           required
           value={value}
           onChange={() => {}}
-          className="pointer-events-none absolute bottom-0 left-4 h-px w-px opacity-0"
+          className="pointer-events-none absolute bottom-0 start-4 h-px w-px opacity-0"
         />
       )}
 
@@ -249,12 +252,13 @@ export function Select({
         createPortal(
           <div
             ref={menuRef}
+            dir={dir}
             style={{ left: pos.left, width: pos.width, top: pos.top, bottom: pos.bottom, maxHeight: MENU_MAX_HEIGHT }}
             className="animate-menu fixed z-[60] flex flex-col overflow-hidden rounded-xl border border-line bg-white shadow-xl ring-1 ring-black/5"
           >
             {withSearch && (
               <div className="relative border-b border-line p-2">
-                <Search className="pointer-events-none absolute left-4.5 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
+                <Search className="pointer-events-none absolute start-4.5 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
                 <input
                   ref={searchRef}
                   value={query}
@@ -263,16 +267,16 @@ export function Select({
                     setActive(0);
                   }}
                   onKeyDown={onKeyDown}
-                  placeholder="Rechercher…"
-                  aria-label="Rechercher dans la liste"
+                  placeholder={t.select.search}
+                  aria-label={t.select.searchLabel}
                   aria-controls={listId}
                   aria-activedescendant={activeId}
-                  className="h-10 w-full rounded-lg bg-ground pl-9 pr-3 text-[15px] outline-none focus:ring-2 focus:ring-ink/15"
+                  className="h-10 w-full rounded-lg bg-ground ps-9 pe-3 text-[15px] outline-none focus:ring-2 focus:ring-ink/15"
                 />
               </div>
             )}
             <ul id={listId} role="listbox" aria-labelledby={triggerId} className="overflow-y-auto p-1.5">
-              {filtered.length === 0 && <li className="px-3 py-2.5 text-sm text-muted">Aucun résultat</li>}
+              {filtered.length === 0 && <li className="px-3 py-2.5 text-sm text-muted">{t.select.noResults}</li>}
               {filtered.map((o, i) => {
                 const isSelected = o.value === value;
                 return (

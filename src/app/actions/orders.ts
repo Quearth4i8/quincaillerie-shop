@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { GOVERNORATES } from "@/lib/constants";
 import type { OrderSource, OrderStatus } from "@/lib/types";
+import { getT } from "@/i18n/server";
+import { getDict, translateDbError, type Dict, type Locale } from "@/i18n/config";
 
 /** Accepts "20 123 456", "+216 20123456", "0021620123456" → "+216 20 123 456" */
 function normalizeTunisianPhone(raw: string) {
@@ -16,26 +18,29 @@ function normalizeTunisianPhone(raw: string) {
   return `+216 ${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5)}`;
 }
 
-const itemsSchema = z
-  .array(z.object({ product_id: z.uuid(), quantity: z.number().int().min(1).max(999) }))
-  .min(1, "Le panier est vide")
-  .max(100);
+const itemsSchema = (e: Dict["errors"]) =>
+  z
+    .array(z.object({ product_id: z.uuid(), quantity: z.number().int().min(1).max(999) }))
+    .min(1, e.cartEmpty)
+    .max(100);
 
-const orderSchema = z.object({
-  customer_name: z.string().trim().min(2, "Indiquez votre nom").max(120),
-  phone: z.string().trim().min(8, "Numéro invalide").max(25),
-  governorate: z.enum(GOVERNORATES, { message: "Choisissez un gouvernorat" }),
-  city: z.string().trim().min(2, "Indiquez la ville").max(120),
-  address: z.string().trim().min(5, "Indiquez l’adresse complète").max(300),
-  note: z.string().trim().max(500).optional(),
-});
+const orderSchema = (e: Dict["errors"]) =>
+  z.object({
+    customer_name: z.string().trim().min(2, e.nameRequired).max(120),
+    phone: z.string().trim().min(8, e.phoneInvalid).max(25),
+    governorate: z.enum(GOVERNORATES, { message: e.chooseGov }),
+    city: z.string().trim().min(2, e.cityRequired).max(120),
+    address: z.string().trim().min(5, e.addressRequired).max(300),
+    note: z.string().trim().max(500).optional(),
+  });
 
 export type PlaceOrderResult =
   | { ok: true; orderNumber: number; total: number }
   | { ok: false; message: string; errors?: Record<string, string> };
 
-async function submitOrder(formData: FormData, source: OrderSource): Promise<PlaceOrderResult> {
-  const parsed = orderSchema.safeParse({
+async function submitOrder(formData: FormData, source: OrderSource, locale: Locale): Promise<PlaceOrderResult> {
+  const e = getDict(locale).errors;
+  const parsed = orderSchema(e).safeParse({
     customer_name: formData.get("customer_name"),
     phone: formData.get("phone"),
     governorate: formData.get("governorate"),
@@ -47,22 +52,22 @@ async function submitOrder(formData: FormData, source: OrderSource): Promise<Pla
   if (!parsed.success) {
     const errors: Record<string, string> = {};
     for (const issue of parsed.error.issues) errors[String(issue.path[0])] ??= issue.message;
-    return { ok: false, message: "Vérifiez les champs indiqués.", errors };
+    return { ok: false, message: e.checkFields, errors };
   }
 
   const phone = normalizeTunisianPhone(parsed.data.phone);
   if (!phone) {
-    return { ok: false, message: "Vérifiez les champs indiqués.", errors: { phone: "Numéro tunisien à 8 chiffres" } };
+    return { ok: false, message: e.checkFields, errors: { phone: e.phoneTn } };
   }
 
   let items: unknown;
   try {
     items = JSON.parse(String(formData.get("items") ?? "[]"));
   } catch {
-    return { ok: false, message: "Panier invalide." };
+    return { ok: false, message: e.cartInvalid };
   }
-  const parsedItems = itemsSchema.safeParse(items);
-  if (!parsedItems.success) return { ok: false, message: parsedItems.error.issues[0]?.message ?? "Panier invalide." };
+  const parsedItems = itemsSchema(e).safeParse(items);
+  if (!parsedItems.success) return { ok: false, message: parsedItems.error.issues[0]?.message ?? e.cartInvalid };
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("place_order", {
@@ -76,7 +81,7 @@ async function submitOrder(formData: FormData, source: OrderSource): Promise<Pla
     p_source: source,
   });
 
-  if (error) return { ok: false, message: error.message || "La commande n’a pas pu être enregistrée." };
+  if (error) return { ok: false, message: error.message ? translateDbError(error.message, locale) : e.orderFailed };
 
   const result = data as { order_number: number; total: number };
   revalidatePath("/gestion", "layout");
@@ -86,14 +91,15 @@ async function submitOrder(formData: FormData, source: OrderSource): Promise<Pla
 
 /** Checkout from the website (guests and signed-in customers) */
 export async function placeOrder(formData: FormData) {
-  return submitOrder(formData, "web");
+  const { locale } = await getT();
+  return submitOrder(formData, "web", locale);
 }
 
 /** Order taken by staff over the phone / WhatsApp */
 export async function createStaffOrder(formData: FormData) {
   await requireRole(["manager", "admin"]);
   const source = formData.get("source") === "whatsapp" ? "whatsapp" : "phone";
-  return submitOrder(formData, source);
+  return submitOrder(formData, source, "fr"); // back office is in French
 }
 
 const STATUSES: OrderStatus[] = ["pending", "confirmed", "out_for_delivery", "delivered", "cancelled"];
@@ -135,7 +141,7 @@ export async function deleteOrder(orderId: string) {
 export async function cancelMyOrder(orderId: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("cancel_my_order", { p_order_id: orderId });
-  if (error) return { ok: false, message: error.message };
+  if (error) return { ok: false, message: translateDbError(error.message, (await getT()).locale) };
   revalidatePath("/compte", "layout");
   return { ok: true };
 }

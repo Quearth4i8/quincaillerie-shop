@@ -8,6 +8,7 @@ import { NavLinks } from "./NavLinks";
 import { RealtimeOrders } from "./RealtimeOrders";
 import { RealtimeChat } from "./RealtimeChat";
 import { createClient } from "@/lib/supabase/server";
+import { I18nProvider } from "@/i18n/I18nProvider";
 
 export async function Shell({
   user,
@@ -23,7 +24,9 @@ export async function Shell({
   ]);
 
   return (
-    <div className="flex min-h-dvh flex-col lg:flex-row">
+    // The back office stays in French, even when the shop is shown in Arabic
+    <I18nProvider locale="fr">
+    <div lang="fr" dir="ltr" className="flex min-h-dvh flex-col lg:flex-row">
       <aside className="bg-ink text-zinc-300 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-64 lg:shrink-0 lg:flex-col">
         <div className="flex items-center justify-between gap-3 px-4 py-4 lg:px-5 lg:py-6">
           <Link href={user.role === "admin" ? "/admin" : "/gestion"} className="flex flex-col leading-none">
@@ -60,6 +63,7 @@ export async function Shell({
       <RealtimeOrders />
       <RealtimeChat />
     </div>
+    </I18nProvider>
   );
 }
 

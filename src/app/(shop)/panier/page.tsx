@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { getDeliveryZones, getSettings } from "@/lib/data";
 import { getCurrentUser } from "@/lib/auth";
 import { CheckoutView } from "@/components/shop/CheckoutView";
+import { getT } from "@/i18n/server";
 
-export const metadata: Metadata = { title: "Panier et commande" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getT()).t.meta.cart };
+}
 
 export default async function CartPage() {
   const [zones, settings, user] = await Promise.all([getDeliveryZones(), getSettings(), getCurrentUser()]);

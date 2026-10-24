@@ -27,7 +27,7 @@ export const getCategories = cache(async (): Promise<Category[]> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("categories")
-    .select("id, slug, name, icon, sort_order")
+    .select("*") // includes name_ar once 04_arabic.sql has run
     .order("sort_order")
     .order("name");
   return data ?? [];
@@ -43,4 +43,4 @@ export const getDeliveryZones = cache(async (): Promise<DeliveryZone[]> => {
 });
 
 export const PRODUCT_CARD_FIELDS =
-  "id, slug, name, price, old_price, stock, images, badge, category:categories(name, slug)";
+  "id, slug, name, price, old_price, stock, images, badge, category:categories(*)";

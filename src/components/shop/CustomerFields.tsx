@@ -3,6 +3,8 @@
 import type { DeliveryZone } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 import { Select } from "@/components/ui/Select";
+import { useI18n } from "@/i18n/I18nProvider";
+import { governorateLabel } from "@/i18n/config";
 
 export type CustomerDefaults = {
   customer_name: string;
@@ -34,20 +36,23 @@ export function CustomerFields({
   governorate: string;
   onGovernorateChange: (g: string) => void;
 }) {
+  const { t, locale } = useI18n();
+  const c = t.checkout;
   const err = (k: string) => (errors[k] ? { "aria-invalid": true, "aria-describedby": `${k}-err` } : {});
 
   return (
     <>
       <fieldset className="card grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
-        <legend className="heading-display px-1.5 text-[26px]">1. Vos coordonnées</legend>
+        <legend className="heading-display px-1.5 text-[26px]">{c.contactLegend}</legend>
         <label className="field-label">
-          Nom et prénom
+          {t.common.fullName}
           <input name="customer_name" required autoComplete="name" defaultValue={defaults.customer_name} className="input" {...err("customer_name")} />
           <FieldError id="customer_name-err" message={errors.customer_name} />
         </label>
         <label className="field-label">
-          Téléphone
-          <span className="flex">
+          {t.common.phone}
+          {/* Phone numbers read left to right, in Arabic too */}
+          <span className="flex" dir="ltr">
             <span className="flex h-12 items-center rounded-l-xl border border-r-0 border-line-strong bg-ground px-3 font-semibold">+216</span>
             <input
               name="phone"
@@ -66,35 +71,36 @@ export function CustomerFields({
       </fieldset>
 
       <fieldset className="card grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
-        <legend className="heading-display px-1.5 text-[26px]">2. Adresse de livraison</legend>
+        <legend className="heading-display px-1.5 text-[26px]">{c.addressLegend}</legend>
         <label className="field-label">
-          Gouvernorat
+          {t.common.governorate}
           <Select
             name="governorate"
             required
             value={governorate}
             onChange={onGovernorateChange}
             {...err("governorate")}
+            placeholder={c.choose}
             options={zones.map((z) => ({
               value: z.governorate,
-              label: z.governorate,
-              hint: `Livraison ${formatPrice(z.fee)} DT${z.delay ? ` · ${z.delay}` : ""}`,
+              label: governorateLabel(z.governorate, locale),
+              hint: c.deliveryHint(formatPrice(z.fee), z.delay),
             }))}
           />
           <FieldError id="governorate-err" message={errors.governorate} />
         </label>
         <label className="field-label">
-          Ville / délégation
+          {t.common.city}
           <input name="city" required autoComplete="address-level2" defaultValue={defaults.city} className="input" {...err("city")} />
           <FieldError id="city-err" message={errors.city} />
         </label>
         <label className="field-label sm:col-span-2">
-          Adresse complète
+          {c.addressFull}
           <input
             name="address"
             required
             autoComplete="street-address"
-            placeholder="Rue, numéro, immeuble, étage…"
+            placeholder={c.addressPlaceholder}
             defaultValue={defaults.address}
             className="input"
             {...err("address")}
@@ -103,13 +109,13 @@ export function CustomerFields({
         </label>
         <label className="field-label sm:col-span-2">
           <span>
-            Repère ou remarque <span className="font-normal text-muted">(facultatif)</span>
+            {c.noteLabel} <span className="font-normal text-muted">{t.common.optional}</span>
           </span>
           <textarea
             name="note"
             rows={3}
             maxLength={500}
-            placeholder="Ex. : en face de la pharmacie, appeler avant d’arriver"
+            placeholder={c.notePlaceholder}
             className="textarea"
           />
         </label>

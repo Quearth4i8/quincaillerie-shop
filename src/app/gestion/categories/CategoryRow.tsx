@@ -37,6 +37,18 @@ export function CategoryRow({ category, productCount }: { category?: Category; p
         Nom
         <input id={`${idPrefix}-name`} name="name" required defaultValue={category?.name} className="input h-11" />
       </label>
+      <label className="field-label min-w-0 flex-1 basis-48" htmlFor={`${idPrefix}-name-ar`}>
+        <span>Nom en arabe <span className="font-normal text-muted">(facultatif)</span></span>
+        <input
+          id={`${idPrefix}-name-ar`}
+          name="name_ar"
+          lang="ar"
+          dir="rtl"
+          defaultValue={category?.name_ar ?? ""}
+          placeholder="مثلاً: العدّة الكهربائية"
+          className="input h-11"
+        />
+      </label>
       <label className="field-label" htmlFor={`${idPrefix}-icon`}>
         Icône
         <Select

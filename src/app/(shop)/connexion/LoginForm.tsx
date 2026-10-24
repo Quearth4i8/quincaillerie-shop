@@ -5,8 +5,11 @@ import { signIn } from "@/app/actions/auth";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { useFormAction } from "@/lib/use-form-action";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function LoginForm({ next }: { next?: string }) {
+  const { t } = useI18n();
+  const a = t.auth;
   const { state, onSubmit, pending } = useFormAction(signIn);
 
   return (
@@ -14,26 +17,24 @@ export function LoginForm({ next }: { next?: string }) {
       {next && <input type="hidden" name="next" value={next} />}
       <FormMessage state={state} />
       <label className="field-label">
-        E-mail
-        <input name="email" type="email" required autoComplete="email" className="input" />
+        {t.common.email}
+        <input name="email" type="email" dir="ltr" required autoComplete="email" className="input" />
       </label>
       <label className="field-label">
-        Mot de passe
+        {t.common.password}
         <input name="password" type="password" required autoComplete="current-password" className="input" />
       </label>
       <Link href="/mot-de-passe-oublie" className="self-end text-sm font-semibold underline">
-        Mot de passe oublié ?
+        {a.forgot}
       </Link>
-      <SubmitButton pending={pending} className="btn-accent h-13 text-lg" pendingLabel="Connexion…">Se connecter</SubmitButton>
+      <SubmitButton pending={pending} className="btn-accent h-13 text-lg" pendingLabel={a.signingIn}>{a.signIn}</SubmitButton>
       <p className="text-center text-muted">
-        Pas encore de compte ?{" "}
+        {a.noAccount}{" "}
         <Link href={`/inscription${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="font-bold text-ink underline">
-          Créer un compte
+          {a.createAccount}
         </Link>
       </p>
-      <p className="text-center text-sm text-muted">
-        Le compte est facultatif : vous pouvez commander sans compte depuis le panier.
-      </p>
+      <p className="text-center text-sm text-muted">{a.optionalAccount}</p>
     </form>
   );
 }

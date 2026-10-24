@@ -27,6 +27,8 @@ export type Category = {
   id: string;
   slug: string;
   name: string;
+  /** Arabic name (04_arabic.sql); null = show the French name */
+  name_ar?: string | null;
   icon: string;
   sort_order: number;
 };
@@ -50,7 +52,7 @@ export type Product = {
   is_featured: boolean;
   is_active: boolean;
   created_at: string;
-  category?: Pick<Category, "name" | "slug"> | null;
+  category?: Pick<Category, "name" | "name_ar" | "slug"> | null;
 };
 
 export type DeliveryZone = {

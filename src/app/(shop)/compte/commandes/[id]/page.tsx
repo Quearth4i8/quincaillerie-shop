@@ -5,18 +5,24 @@ import { ArrowLeft, Phone } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data";
-import { formatDateTime, telHref } from "@/lib/format";
+import { telHref } from "@/lib/format";
 import type { Order, OrderStatus } from "@/lib/types";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { OrderItemsTable, OrderTimeline } from "@/components/ui/OrderSummary";
 import { CancelOrderButton } from "./CancelOrderButton";
+import { getT } from "@/i18n/server";
+import { formatDateTimeL, governorateLabel } from "@/i18n/config";
 
-export const metadata: Metadata = { title: "Suivi de commande" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getT()).t.meta.orderTracking };
+}
 
 export default async function MyOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await requireRole(["customer", "manager", "admin"], `/compte/commandes/${id}`);
   const supabase = await createClient();
+  const { t, locale } = await getT();
+  const a = t.account;
 
   const [{ data: order }, { data: history }, settings] = await Promise.all([
     supabase
@@ -39,13 +45,13 @@ export default async function MyOrderPage({ params }: { params: Promise<{ id: st
   return (
     <div className="container-page max-w-4xl py-8">
       <Link href="/compte" className="mb-4 inline-flex items-center gap-1.5 font-semibold hover:underline">
-        <ArrowLeft className="size-4" aria-hidden="true" />
-        Mes commandes
+        <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
+        {a.myOrders}
       </Link>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="heading-display text-4xl sm:text-5xl">Commande n° {order.order_number}</h1>
-          <p className="mt-1 text-muted">Passée le {formatDateTime(order.created_at)}</p>
+          <h1 className="heading-display text-4xl sm:text-5xl">{a.orderN(order.order_number)}</h1>
+          <p className="mt-1 text-muted">{a.placedOn(formatDateTimeL(order.created_at, locale))}</p>
         </div>
         <StatusBadge status={order.status} className="px-3.5 py-1 text-sm" />
       </div>
@@ -57,23 +63,23 @@ export default async function MyOrderPage({ params }: { params: Promise<{ id: st
       <div className="grid gap-6 md:grid-cols-[1.6fr_1fr]">
         <OrderItemsTable order={order} />
         <div className="card flex flex-col gap-2 p-5">
-          <h2 className="text-lg font-bold">Livraison</h2>
+          <h2 className="text-lg font-bold">{a.delivery}</h2>
           <p>{order.customer_name}</p>
-          <p>{order.phone}</p>
+          <p dir="ltr" className="self-start">{order.phone}</p>
           <p>
             {order.address}
             <br />
-            {order.city}, {order.governorate}
+            {order.city}, {governorateLabel(order.governorate, locale)}
           </p>
           {order.note && <p className="text-muted">« {order.note} »</p>}
-          <p className="mt-2 text-sm text-muted">Paiement en espèces à la livraison.</p>
+          <p className="mt-2 text-sm text-muted">{a.cashOnDelivery}</p>
         </div>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <a href={telHref(settings.phone)} className="btn-dark h-12">
           <Phone className="size-4" aria-hidden="true" />
-          Une question ? {settings.phone}
+          {t.common.question(settings.phone)}
         </a>
         {order.status === "pending" && <CancelOrderButton orderId={order.id} />}
       </div>
